@@ -3,9 +3,11 @@ from datetime import timedelta
 from airflow import DAG
 
 from airflow.operators.python import PythonOperator
+from airflow.operators.bash import BashOperator
+from airflow.operators.empty import EmptyOperator
 from airflow.utils.dates import days_ago 
 
-import pandas as pd 
+import random as rd 
 import os
 
 APPLES = ["pink lady", "jazz", 
@@ -21,6 +23,10 @@ def print_hello():
 
   print(f"Hello, {name}!")
 
+def random_apple():
+  """Print a randomly-selected apple variety from APPLES"""
+  print(rd.choice(APPLES))
+
 default_args = {
     'start_date': days_ago(2), 
     'schedule_interval': timedelta(days=1), 
@@ -30,8 +36,33 @@ default_args = {
 
 with DAG(
   'code_review',
-  description='Read/transform India_Menu.csv and write summary metrics to JSON',
+  description='Code review for Chapter 11',
   default_args=default_args
 ) as dag:
 
+  echo_to_file = BashOperator(
+    task_id="Echo to file", 
+    bash_command=f"echo 'Alejandro Socarras' >> code_review.txt"
+  )
 
+  greeting = PythonOperator(
+    task_id="Print Greeting", 
+    python_callable=print_hello
+  )
+
+  rand_apples = BashOperator(
+    task_id="Random Apples", 
+    bash_command="echo 'picking three random apples'"
+  )
+
+  apple_tasks = []
+  for i in range(3): 
+    task=PythonOperator(
+      task_id=f"apple_{i}", 
+      python_callable=random_apple
+    )
+    apple_tasks.append(task)
+
+  end_task = EmptyOperator(task_id="end")
+
+  echo_to_file >> greeting >> rand_apples >> apple_tasks >> end_task
