@@ -19,7 +19,7 @@ def print_hello():
   path = os.path.abspath(__file__)
   dir_name = os.path.dirname(path)
   with open(f"{dir_name}/code_review.txt", "r") as file: 
-    name = file.read()
+    name = file.read().strip()
 
   print(f"Hello, {name}!")
 
@@ -31,7 +31,7 @@ default_args = {
     'start_date': days_ago(2), 
     'schedule_interval': timedelta(days=1), 
     'retries': 1, 
-    'retry_delay': timedelta(seconds=10), 
+    'retry_delay': timedelta(seconds=3), 
 }
 
 with DAG(
@@ -41,17 +41,17 @@ with DAG(
 ) as dag:
 
   echo_to_file = BashOperator(
-    task_id="Echo to file", 
-    bash_command=f"echo 'Alejandro Socarras' >> code_review.txt"
+    task_id="echo_file", 
+    bash_command=f'echo "Alejandro Socarras" > /opt/airflow/dags/code_review.txt'
   )
 
   greeting = PythonOperator(
-    task_id="Print Greeting", 
+    task_id="print_greeting", 
     python_callable=print_hello
   )
 
   rand_apples = BashOperator(
-    task_id="Random Apples", 
+    task_id="rand_apples", 
     bash_command="echo 'picking three random apples'"
   )
 
